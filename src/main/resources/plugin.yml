@@ -1,0 +1,4 @@
+name: AHANYEve
+version: '${project.version}'
+main: cc.ahaly.mc.ahanyeve.AHANYEve
+api-version: '1.20'
