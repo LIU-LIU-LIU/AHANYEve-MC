@@ -2,3 +2,7 @@ name: AHANYEve
 version: '${project.version}'
 main: cc.ahaly.mc.ahanyeve.AHANYEve
 api-version: '1.20'
+commands:
+  countdown:
+    description: 开始到0点的倒计时
+    permission: AHANYEve.countdown
