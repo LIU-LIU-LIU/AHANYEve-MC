@@ -21,7 +21,13 @@ import java.util.Random;
 import static org.bukkit.Bukkit.getServer;
 
 public class CountdownCommand implements CommandExecutor {
+    static BossBar bossBar;
     private JavaPlugin plugin;
+    private Random random = new Random();
+
+    private int currentRadius = 0; // 当前处理的半径
+    private final int maxRadius = 256; // 最大半径，您可以根据需要调整
+    private final int radiusIncrement = 32; // 每次增加的半径，您可以根据需要调整
 
     public CountdownCommand(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -42,30 +48,31 @@ public class CountdownCommand implements CommandExecutor {
     }
 
     private void startCountdown(Player player) {
-        BossBar bossBar = getServer().createBossBar("倒计时", BarColor.RED, BarStyle.SOLID);
-        bossBar.addPlayer(player);
+        bossBar = getServer().createBossBar("倒计时", BarColor.RED, BarStyle.SOLID);
+        for (Player onlinePlayer : Bukkit.getServer().getOnlinePlayers()) {
+            bossBar.addPlayer(onlinePlayer);
+        }
 
         new BukkitRunnable() {
             @Override
             public void run() {
                 LocalDateTime now = LocalDateTime.now();
-                LocalDateTime midnight = LocalDateTime.of(now.toLocalDate().plusDays(1), LocalTime.MIDNIGHT);
-                long secondsUntilMidnight = now.until(midnight, ChronoUnit.SECONDS);
+                // 将目标时间设置为明天的午夜（今天日期加一天，时间设为零点）
+                LocalDateTime targetTime = now.toLocalDate().plusDays(1).atStartOfDay();
 
-                if (secondsUntilMidnight <= 0) {
+                if (now.isAfter(targetTime) || now.equals(targetTime)) { // 检查当前时间是否已经到了或过了目标时间
                     bossBar.setTitle("新的一年开始了!");
-                    for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-                        new SendEffect(player,"§c§l新年快乐！");
-                        SendEffect.launchFirework(player.getLocation());
+                    for (Player onlinePlayer : Bukkit.getServer().getOnlinePlayers()) {
+                        new SendEffect(onlinePlayer, "§c§l新年快乐！");
+                        SendEffect.launchFirework(onlinePlayer.getLocation());
                     }
                     bossBar.setColor(BarColor.GREEN);
-                    // 从玩家位置创建冬季
-                    createWinterWonderland(player.getLocation(),512);
-                    //显示计分板
+                    createWinterWonderland(player.getLocation());
                     ScoreboardHandler.startRotatingDisplay(plugin);
                     this.cancel();
                 } else {
-                    bossBar.setTitle("距离新年还有: " + formatTime(secondsUntilMidnight));
+                    long secondsUntilTarget = ChronoUnit.SECONDS.between(now, targetTime);
+                    bossBar.setTitle("距离新年还有: " + formatTime(secondsUntilTarget));
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L); // 每秒更新一次
@@ -78,22 +85,42 @@ public class CountdownCommand implements CommandExecutor {
         return String.format("%02d:%02d:%02d", hours, minutes, secs);
     }
 
-    //过零点，创建冬季仙境
-    public void createWinterWonderland(Location location, int radius) {
+    //到点创建冬季仙境
+    public void createWinterWonderland(Location location) {
         World world = location.getWorld();
         int centerX = location.getBlockX();
         int centerZ = location.getBlockZ();
-        setSnowBiome(world, centerX, centerZ, radius);
-        startSnowing(world);
-        // 在半径区域内随机生成雪人
-        int snowmenCount = 25; // 假设你想生成10个雪人
-        for (int i = 0; i < snowmenCount; i++) {
-            Location randomLocation = getRandomLocation(world, location, radius);
-            spawnSnowman(world, randomLocation);
-        }
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // 检查是否已处理完整个区域
+                if (currentRadius >= maxRadius) {
+                    this.cancel();
+                    return;
+                }
+
+                // 更新群系
+                setSnowBiome(world, centerX, centerZ, currentRadius, currentRadius + radiusIncrement);
+                currentRadius += radiusIncrement;
+
+                // 生成雪人
+                if (currentRadius % (radiusIncrement * 5) == 0) { // 每扩展一定范围时生成雪人
+                    for (int i = 0; i < 5; i++) {
+                        Location randomLocation = getRandomLocation(world, location, currentRadius);
+                        spawnSnowman(world, randomLocation);
+                    }
+                }
+
+                // 开始下雪
+                if (currentRadius == radiusIncrement) {
+                    startSnowing(world);
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 20 * 60L); // 每分钟更新一次
     }
 
-    private Random random = new Random();
+
     // 获取半径内的随机位置
     private Location getRandomLocation(World world, Location center, int radius) {
         int randomX = random.nextInt(radius * 2) - radius;
@@ -108,17 +135,26 @@ public class CountdownCommand implements CommandExecutor {
 
 
     //设置群系
-    public void setSnowBiome(World world, int centerX, int centerZ, int radius) {
-        int chunkRadius = radius / 16; // 将半径从方块转换为区块
-        for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
-            for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
-                Chunk chunk = world.getChunkAt(centerX + dx, centerZ + dz);
-                for (int x = 0; x < 16; x++) {
-                    for (int z = 0; z < 16; z++) {
-                        for (int y = world.getMaxHeight() - 1; y >= 0; y--) {
-                            if (chunk.getBlock(x, y, z).getType().isSolid()) {
-                                world.setBiome((centerX + dx) * 16 + x, y, (centerZ + dz) * 16 + z, Biome.SNOWY_PLAINS);
-                                break;
+    public void setSnowBiome(World world, int centerX, int centerZ, int startRadius, int endRadius) {
+        // 将半径从方块转换为区块
+        int startChunkRadius = startRadius / 16;
+        int endChunkRadius = endRadius / 16;
+
+        for (int dx = -endChunkRadius; dx <= endChunkRadius; dx++) {
+            for (int dz = -endChunkRadius; dz <= endChunkRadius; dz++) {
+                // 计算当前区块与中心点的距离
+                double distance = Math.sqrt(dx * dx + dz * dz);
+
+                // 检查当前区块是否在指定的半径范围内
+                if (distance >= startChunkRadius && distance <= endChunkRadius) {
+                    Chunk chunk = world.getChunkAt(centerX / 16 + dx, centerZ / 16 + dz);
+                    for (int x = 0; x < 16; x++) {
+                        for (int z = 0; z < 16; z++) {
+                            for (int y = world.getMaxHeight() - 1; y >= 0; y--) {
+                                if (chunk.getBlock(x, y, z).getType().isSolid()) {
+                                    world.setBiome((centerX + dx * 16) + x, y, (centerZ + dz * 16) + z, Biome.SNOWY_PLAINS);
+                                    break;
+                                }
                             }
                         }
                     }

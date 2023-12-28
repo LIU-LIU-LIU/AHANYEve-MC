@@ -15,7 +15,7 @@ import java.util.Random;
 public class SendEffect {
 
     public SendEffect(Player player, String message) {
-        player.sendTitle(message, "§7§l祝你新年快乐🎉" + getRandomKaomoji(), 3, 8, 3);
+        player.sendTitle(message, "§c§l祝你新年快乐🎉" + getRandomKaomoji(), 5, 20, 5);
         playRandomSound(player);
     }
 

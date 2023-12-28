@@ -19,8 +19,9 @@ public final class AHANYEve extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        ScoreboardHandler.stopRotatingDisplay();
+        CountdownCommand.bossBar.removeAll();  // 移除所有玩家，从而使得boss栏不再显示
         getLogger().info("跨年插件已禁用.");
     }
-
 
 }
