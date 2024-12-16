@@ -1,7 +1,7 @@
 name: AHANYEve
 version: '${project.version}'
 main: cc.ahaly.mc.ahanyeve.AHANYEve
-api-version: '1.20'
+api-version: '1.21'
 author: AHA
 commands:
   countdown:

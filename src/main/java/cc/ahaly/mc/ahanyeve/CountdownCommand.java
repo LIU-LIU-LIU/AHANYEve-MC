@@ -14,65 +14,79 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
 import static org.bukkit.Bukkit.getServer;
 
 public class CountdownCommand implements CommandExecutor {
+    //创建一个静态变量用于确认倒计时结束
+    static boolean isEnd = false;
+    boolean isCommand = false;
     static BossBar bossBar;
     private JavaPlugin plugin;
     private Random random = new Random();
-
     private int currentRadius = 0; // 当前处理的半径
-    private final int maxRadius = 256; // 最大半径，您可以根据需要调整
-    private final int radiusIncrement = 32; // 每次增加的半径，您可以根据需要调整
-
-    public CountdownCommand(JavaPlugin plugin) {
+    private final int MAXRADIUS = 256; // 最大半径，您可以根据需要调整
+    private final int RADIUS_INCREMENT = 32; // 每次增加的半径，您可以根据需要调整
+    private FireworkShow fireworkShow;
+    public CountdownCommand(FireworkShow fireworkShow, JavaPlugin plugin) {
+        this.fireworkShow = fireworkShow;
         this.plugin = plugin;
     }
 
+    
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("countdown")) {
-            if (sender instanceof Player && sender.isOp()) {
-                startCountdown((Player) sender);
-                return true;
-            } else {
-                sender.sendMessage("只有OP可以执行这个命令。");
+        if (!isCommand){
+            if (cmd.getName().equalsIgnoreCase("countdown")) {
+                if (sender instanceof Player && sender.isOp()) {
+                    startCountdown((Player) sender);
+                    isCommand = true;
+                } else {
+                    sender.sendMessage("只有OP可以执行这个命令。");
+                }
                 return true;
             }
+        } else {
+            sender.sendMessage("请勿重复运行。");
         }
         return false;
     }
 
     private void startCountdown(Player player) {
         bossBar = getServer().createBossBar("倒计时", BarColor.RED, BarStyle.SOLID);
-        for (Player onlinePlayer : Bukkit.getServer().getOnlinePlayers()) {
+        for (Player onlinePlayer : getServer().getOnlinePlayers()) {
             bossBar.addPlayer(onlinePlayer);
         }
+        // 将目标时间设置为明天的午夜（今天日期加一天，时间设为零点）
+//      LocalDateTime targetTime = LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay();
+        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(1); // 设置目标时间为当前时间加1分钟
 
         new BukkitRunnable() {
             @Override
             public void run() {
                 LocalDateTime now = LocalDateTime.now();
-                // 将目标时间设置为明天的午夜（今天日期加一天，时间设为零点）
-                LocalDateTime targetTime = now.toLocalDate().plusDays(1).atStartOfDay();
-
-                if (now.isAfter(targetTime) || now.equals(targetTime)) { // 检查当前时间是否已经到了或过了目标时间
-                    bossBar.setTitle("新的一年开始了!");
-                    for (Player onlinePlayer : Bukkit.getServer().getOnlinePlayers()) {
-                        new SendEffect(onlinePlayer, "§c§l新年快乐！");
+                if (now.isAfter(targetTime) ) { // 检查当前时间是否已经到了
+                    bossBar.setTitle("2025新年快乐!");
+                    isEnd = true;
+                    for (Player onlinePlayer : getServer().getOnlinePlayers()) {
+                        new SendEffect(onlinePlayer, "§c§l新年快乐！\n现在所有人都有op，且死亡不掉落随意玩耍吧。");
+                        player.sendMessage("§c§l新年快乐！\n现在所有人都有op，且死亡不掉落随意玩耍吧。");
                         SendEffect.launchFirework(onlinePlayer.getLocation());
+
                     }
                     bossBar.setColor(BarColor.GREEN);
-                    createWinterWonderland(player.getLocation());
-                    ScoreboardHandler.startRotatingDisplay(plugin);
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule keepInventory true");
+                    grantAllPlayersOP();
                     this.cancel();
                 } else {
+                    createWinterWonderland(player.getLocation());
+                    ScoreboardHandler.startRotatingDisplay(plugin);
                     long secondsUntilTarget = ChronoUnit.SECONDS.between(now, targetTime);
                     bossBar.setTitle("距离新年还有: " + formatTime(secondsUntilTarget));
+                    fireworkShow.launchFireworkShow(player.getLocation(), 10);
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L); // 每秒更新一次
@@ -85,7 +99,18 @@ public class CountdownCommand implements CommandExecutor {
         return String.format("%02d:%02d:%02d", hours, minutes, secs);
     }
 
-    //到点创建冬季仙境
+
+    // 授予所有在线玩家OP
+    private void grantAllPlayersOP() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.isOp()) {
+                player.setOp(true);
+                player.sendMessage("§a你已获得 OP 权限！");
+            }
+        }
+    }
+
+    //创建冬季仙境
     public void createWinterWonderland(Location location) {
         World world = location.getWorld();
         int centerX = location.getBlockX();
@@ -95,17 +120,17 @@ public class CountdownCommand implements CommandExecutor {
             @Override
             public void run() {
                 // 检查是否已处理完整个区域
-                if (currentRadius >= maxRadius) {
+                if (currentRadius >= MAXRADIUS) {
                     this.cancel();
                     return;
                 }
 
                 // 更新群系
-                setSnowBiome(world, centerX, centerZ, currentRadius, currentRadius + radiusIncrement);
-                currentRadius += radiusIncrement;
+                setSnowBiome(world, centerX, centerZ, currentRadius, currentRadius + RADIUS_INCREMENT);
+                currentRadius += RADIUS_INCREMENT;
 
                 // 生成雪人
-                if (currentRadius % (radiusIncrement * 5) == 0) { // 每扩展一定范围时生成雪人
+                if (currentRadius % (RADIUS_INCREMENT * 5) == 0) { // 每扩展一定范围时生成雪人
                     for (int i = 0; i < 5; i++) {
                         Location randomLocation = getRandomLocation(world, location, currentRadius);
                         spawnSnowman(world, randomLocation);
@@ -113,7 +138,7 @@ public class CountdownCommand implements CommandExecutor {
                 }
 
                 // 开始下雪
-                if (currentRadius == radiusIncrement) {
+                if (currentRadius == RADIUS_INCREMENT) {
                     startSnowing(world);
                 }
             }

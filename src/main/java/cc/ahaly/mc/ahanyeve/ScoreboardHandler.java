@@ -26,7 +26,7 @@ public class ScoreboardHandler {
             // 初始化 Objective 实例
             killsObjective = scoreboard.registerNewObjective("kills", "playerKillCount", "击杀数");
             deathsObjective = scoreboard.registerNewObjective("deaths", "deathCount", "死亡数");
-            snowballObjective = scoreboard.registerNewObjective("snowballCount", "dummy", "扔雪球数");
+            snowballObjective = scoreboard.registerNewObjective("snowballCount", "dummy", "扔雪球");
         }
     }
 
