@@ -29,9 +29,7 @@ public class CountdownCommand implements CommandExecutor {
     private int currentRadius = 0; // 当前处理的半径
     private final int MAXRADIUS = 256; // 最大半径，您可以根据需要调整
     private final int RADIUS_INCREMENT = 32; // 每次增加的半径，您可以根据需要调整
-    private FireworkShow fireworkShow;
-    public CountdownCommand(FireworkShow fireworkShow, JavaPlugin plugin) {
-        this.fireworkShow = fireworkShow;
+    public CountdownCommand(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -60,9 +58,9 @@ public class CountdownCommand implements CommandExecutor {
         for (Player onlinePlayer : getServer().getOnlinePlayers()) {
             bossBar.addPlayer(onlinePlayer);
         }
-        // 将目标时间设置为明天的午夜（今天日期加一天，时间设为零点）
-//      LocalDateTime targetTime = LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay();
-        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(1); // 设置目标时间为当前时间加1分钟
+// 设置目标时间为 2025 年 1 月 1 日 00:00:00
+        LocalDateTime targetTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0, 0);
+//        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(1); // 设置目标时间为当前时间加1分钟
 
         new BukkitRunnable() {
             @Override
@@ -75,7 +73,7 @@ public class CountdownCommand implements CommandExecutor {
                         new SendEffect(onlinePlayer, "§c§l新年快乐！\n现在所有人都有op，且死亡不掉落随意玩耍吧。");
                         player.sendMessage("§c§l新年快乐！\n现在所有人都有op，且死亡不掉落随意玩耍吧。");
                         SendEffect.launchFirework(onlinePlayer.getLocation());
-
+                        new FireworkShow(plugin).launchFireworkShow(onlinePlayer.getLocation(), 10);
                     }
                     bossBar.setColor(BarColor.GREEN);
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule keepInventory true");
@@ -86,7 +84,6 @@ public class CountdownCommand implements CommandExecutor {
                     ScoreboardHandler.startRotatingDisplay(plugin);
                     long secondsUntilTarget = ChronoUnit.SECONDS.between(now, targetTime);
                     bossBar.setTitle("距离新年还有: " + formatTime(secondsUntilTarget));
-                    fireworkShow.launchFireworkShow(player.getLocation(), 10);
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L); // 每秒更新一次

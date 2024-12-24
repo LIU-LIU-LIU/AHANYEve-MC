@@ -12,8 +12,7 @@ public final class AHANYEve extends JavaPlugin {
         // 注册事件监听器
         getServer().getPluginManager().registerEvents(new MyEvent(this), this);
         // 将命令 "countdown" 的处理器设置为 CountdownCommand 的实例
-        FireworkShow fireworkShow = new FireworkShow(this);
-        Objects.requireNonNull(this.getCommand("countdown")).setExecutor(new CountdownCommand(fireworkShow,this));
+        Objects.requireNonNull(this.getCommand("countdown")).setExecutor(new CountdownCommand(this));
         getLogger().info("跨年插件已启用.");
     }
 

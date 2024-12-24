@@ -76,21 +76,24 @@ public class MyEvent implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        player.sendMessage("§a欢迎进入服务器！现在是2025跨年祭。" +
-                "\n§e§l服务器所有数据均已备份，请不要进行生产工作，现在服务器不会保留数据!" +
-                "\n§a现在雪球和物品耐久不会消耗，送你些雪球打雪仗吧。");
+        player.sendMessage("§a欢迎进入服务器！现在是2025跨年祭事件。" +
+                "\n§a雪球和物品耐久不会消耗，送你些雪球打雪仗吧。");
         // 发送消息给玩家
         new SendEffect(player, "");
-        player.getInventory().addItem(new ItemStack(Material.SNOWBALL, 16));
-        player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 16));
+        new FireworkShow(plugin).launchFireworkShow(player.getLocation(), 3);
 
         if (CountdownCommand.bossBar != null) {
             CountdownCommand.bossBar.addPlayer(event.getPlayer());
         }
         if (isEnd) {
+            // 添加一些雪球和苹果
+            player.getInventory().addItem(new ItemStack(Material.SNOWBALL, 16));
+            player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 16));
             if (!player.isOp()) {
                 player.setOp(true);
-                player.sendMessage("§a欢迎加入服务器！2025新年快乐，你已获得 OP 权限！");
+                player.sendMessage("§a欢迎加入服务器！2025新年快乐！" +
+                        "\n§a死亡不掉落，且所有人均获得 OP 权限！" +
+                        "\n§e§l服务器所有数据均已备份，请不要进行生产工作，现在服务器不会保留数据!");
             }
         }
     }
