@@ -15,6 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.bukkit.Bukkit.getServer;
@@ -58,9 +59,19 @@ public class CountdownCommand implements CommandExecutor {
         for (Player onlinePlayer : getServer().getOnlinePlayers()) {
             bossBar.addPlayer(onlinePlayer);
         }
+        createWinterWonderland(player.getLocation());
+        ScoreboardHandler.startRotatingDisplay(plugin);
 // 设置目标时间为 2025 年 1 月 1 日 00:00:00
-        LocalDateTime targetTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0, 0);
-//        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(1); // 设置目标时间为当前时间加1分钟
+//        LocalDateTime targetTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0, 0);
+        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(2); // 设置目标时间为当前时间加1分钟
+        // 计算当前时间与目标时间之间的秒数差
+        long secondsUntilTarget = ChronoUnit.SECONDS.between(LocalDateTime.now(), targetTime);
+        // 计算目标时间应该对应的游戏时间（Minecraft的游戏时间是24000一周期，0对应日出）
+        long targetGameTime = (24000L * ChronoUnit.DAYS.between(LocalDateTime.now(), targetTime)) % 24000;
+        // 更新游戏时间为目标时间对应的游戏时间
+        getServer().getWorlds().forEach(world -> {
+            world.setFullTime(targetGameTime);
+        });
 
         new BukkitRunnable() {
             @Override
@@ -77,11 +88,11 @@ public class CountdownCommand implements CommandExecutor {
                     }
                     bossBar.setColor(BarColor.GREEN);
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "gamerule keepInventory true");
+                    // 设置天气为晴天，保证可以看到太阳
+                    Objects.requireNonNull(Bukkit.getWorld("world")).setStorm(false);
                     grantAllPlayersOP();
                     this.cancel();
                 } else {
-                    createWinterWonderland(player.getLocation());
-                    ScoreboardHandler.startRotatingDisplay(plugin);
                     long secondsUntilTarget = ChronoUnit.SECONDS.between(now, targetTime);
                     bossBar.setTitle("距离新年还有: " + formatTime(secondsUntilTarget));
                 }
