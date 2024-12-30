@@ -85,7 +85,7 @@ public class MyEvent implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null && meta.getDisplayName().equals(ChatColor.GREEN + "传送树苗")) {
                 // 传送玩家到指定地点
-                Location targetLocation = new Location(Bukkit.getWorld("world"), -3415, 64, 1127); // 设置目标位置
+                Location targetLocation = new Location(Bukkit.getWorld("world"), -3410, 64, -1102); // 设置目标位置
                 player.teleport(targetLocation);
 
                 // 添加传送特效
@@ -106,10 +106,8 @@ public class MyEvent implements Listener {
         // 欢迎消息
         player.sendMessage("§a欢迎加入服务器！2025跨年祭活动正在进行中！" +
                 "\n§a物品耐久不会消耗，送你一些雪球打雪仗吧！" +
-                "\n§e右键树苗可以传送到跨年广场！");
-
-        // 给予玩家雪球
-        player.getInventory().addItem(new ItemStack(Material.SNOWBALL, 16));
+                "\n§e右键树苗可以传送到跨年广场！"+
+                "\n§c注意：服务器数据已备份，当前所有操作将不会保存！");
 
         // 创建传送用的树苗
         ItemStack sapling = new ItemStack(Material.SPRUCE_SAPLING); // 使用橡树树苗
@@ -119,9 +117,12 @@ public class MyEvent implements Listener {
             meta.setLore(java.util.Arrays.asList(ChatColor.GRAY + "右键或左键点击即可传送到跨年广场！"));
             sapling.setItemMeta(meta);
         }
-
         // 将树苗给予玩家
         player.getInventory().addItem(sapling);
+
+        // 给予玩家雪球
+        player.getInventory().addItem(new ItemStack(Material.SNOWBALL, 16));
+        player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 16));
 
         // 特效和烟花展示
         new SendEffect(player, ""); // 自定义方法，确保有实际功能
@@ -134,7 +135,6 @@ public class MyEvent implements Listener {
 
         // 新年结束时的奖励及特权
         if (isEnd) {
-            player.getInventory().addItem(new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, 16));
             if (!player.isOp()) {
                 player.setOp(true); // 给予 OP 权限
                 player.sendMessage("§6§l新年快乐！" +
