@@ -104,7 +104,7 @@ public class MyEvent implements Listener {
         Player player = event.getPlayer();
 
         // 欢迎消息
-        player.sendMessage("§a欢迎加入服务器！2025跨年祭活动正在进行中！" +
+        player.sendMessage("§a欢迎加入服务器！2026跨年活动正在进行中！" +
                 "\n§a物品耐久不会消耗，送你一些雪球打雪仗吧！" +
                 "\n§e右键树苗可以传送到跨年广场！"+
                 "\n§c注意：服务器数据已备份，当前所有操作将不会保存！");

@@ -61,8 +61,8 @@ public class CountdownCommand implements CommandExecutor {
         }
         createWinterWonderland(player.getLocation());
         ScoreboardHandler.startRotatingDisplay(plugin);
-// 设置目标时间为 2025 年 1 月 1 日 00:00:00
-        LocalDateTime targetTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0, 0);
+// 设置目标时间为 2026 年 1 月 1 日 00:00:00
+        LocalDateTime targetTime = LocalDateTime.of(2026, 1, 1, 0, 0, 0, 0);
 //        LocalDateTime targetTime = LocalDateTime.now().plusMinutes(20); // 设置目标时间为当前时间加1分钟
         // 计算当前时间与目标时间之间的秒数差
         long secondsUntilTarget = ChronoUnit.SECONDS.between(LocalDateTime.now(), targetTime);
@@ -78,7 +78,7 @@ public class CountdownCommand implements CommandExecutor {
             public void run() {
                 LocalDateTime now = LocalDateTime.now();
                 if (now.isAfter(targetTime) ) { // 检查当前时间是否已经到了
-                    bossBar.setTitle("2025新年快乐!");
+                    bossBar.setTitle("2026新年快乐!");
                     isEnd = true;
                     for (Player onlinePlayer : getServer().getOnlinePlayers()) {
                         new SendEffect(onlinePlayer, "§c§l新年快乐！\n现在所有人都有op，且死亡不掉落随意玩耍吧。");
